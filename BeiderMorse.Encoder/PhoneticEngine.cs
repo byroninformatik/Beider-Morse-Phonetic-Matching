@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Text;
 using BeiderMorse.Encoder.Enumerator;
@@ -10,8 +9,9 @@ namespace BeiderMorse.Encoder
    public class PhoneticEngine : IPhoneticEngine
    {
       private static int _defaultMaxPhoneme = 20;
-      private static int _maxCharacters;
       private readonly IDictionary<NameType, ISet<string>> _namePrefixes;
+
+      public int MaxCharacters { get; set; } = 1000000;
 
       private NameType _nameType { get; }
       private RuleType _ruleType { get; }
@@ -31,8 +31,6 @@ namespace BeiderMorse.Encoder
 
       public string Encode(string input)
       {
-         _maxCharacters = SetMaxCharacters();
-
          input = input.ToLower().Replace('-', ' ').Trim();
 
          if (_nameType == NameType.GENERIC)
@@ -51,13 +49,6 @@ namespace BeiderMorse.Encoder
 
          result = AnalyzeNameLength(result);
          return result;
-      }
-
-      private static int SetMaxCharacters()
-      {
-         return Int16.TryParse(ConfigurationManager.AppSettings["CharactersLimit"], out short maxNumber) 
-            ? maxNumber : 
-            1000000;
       }
 
       private string CheckForDApostrophe(string input)
@@ -173,7 +164,7 @@ namespace BeiderMorse.Encoder
       {
          int length = result.Length + nomAppend.Length;
 
-         while (length > _maxCharacters - 2)
+         while (length > MaxCharacters - 2)
          {
             if (result.Length > nomAppend.Length)
             {
@@ -196,7 +187,7 @@ namespace BeiderMorse.Encoder
 
       private string AnalyzeNameLength(string result)
       {
-         while (result.Length > _maxCharacters - 2)
+         while (result.Length > MaxCharacters - 2)
          {
             result = result.Substring(0, result.LastIndexOf("|", StringComparison.Ordinal));
          }

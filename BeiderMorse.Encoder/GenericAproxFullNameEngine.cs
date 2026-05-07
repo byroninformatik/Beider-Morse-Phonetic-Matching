@@ -1,18 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using BeiderMorse.Encoder.Enumerator;
 
 namespace BeiderMorse.Encoder
 {
+    /// <summary>
+    /// Kodiert einen Namen mit dem Beider-Morse-Regelwerk <c>APPROX</c> und behandelt die gesamte Eingabe als eine phonetische Einheit.
+    /// Die Näherungsregeln erzeugen breitere Phoneme, die sprachübergreifende Klangvarianten tolerieren. Diese Engine eignet sich
+    /// daher besonders für unscharfes Matching, bei dem sprachbedingte Schreibvarianten erwartet werden (z.B. "Müller" ~ "Miller").
+    /// Adelspräfixe (da, de, van, von, …) und französische d'Apostroph-Konstrukte werden behandelt, indem alternative
+    /// Phonemcodes erzeugt und mit <c>|</c> getrennt werden.
+    /// </summary>
     public class GenericAproxPhoneticEngine : IPhoneticEngine
     {
         private static int _defaultMaxPhoneme = 20;
-        private static int _maxCharacters;
         private readonly ISet<string> _namePrefixes;
 
         public int MaxPhonemes { get; }
+        public int MaxCharacters { get; set; } = 1000000;
         private Lang Lang { get; }
 
         public GenericAproxPhoneticEngine()
@@ -24,19 +30,11 @@ namespace BeiderMorse.Encoder
 
         public string Encode(string name)
         {
-            _maxCharacters = SetMaxCharacters();
             name = CleanName(name);
 
             string phoneticName = TranslateNameIntoPhonemes(name);
 
             return FormatNameLength(phoneticName);
-        }
-
-        private static int SetMaxCharacters()
-        {
-            return Int16.TryParse(ConfigurationManager.AppSettings["CharactersLimit"], out short maxNumber)
-                ? maxNumber
-                : 1000000;
         }
 
         private static string CleanName(string name)
@@ -104,7 +102,7 @@ namespace BeiderMorse.Encoder
 
         private string FormatNameLength(string result)
         {
-            while (result.Length > _maxCharacters - 2)
+            while (result.Length > MaxCharacters - 2)
             {
                 result = result.Substring(0, result.LastIndexOf("|", StringComparison.Ordinal));
             }

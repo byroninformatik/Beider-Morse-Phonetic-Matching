@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using BeiderMorse.Encoder;
 using BeiderMorse.Encoder.Enumerator;
@@ -256,15 +255,15 @@ namespace BeiderMorse.Test
       public void Encoder_Input_Verify_Length_Under_MaxCharacter()
       {
          bool result = true;
-         int max = Convert.ToInt16(ConfigurationManager.AppSettings["CharactersLimit"]);
          ICollection<string> encodeList = new List<string>() { "DESTROISMAISONS-PICARD", "DES GROSEILLIERS" };
 
          foreach (string input in encodeList)
          {
             IPhoneticEngine encoder = new PhoneticEngine(NameType.GENERIC, RuleType.APPROX, true);
+            encoder.MaxCharacters = 300;
 
             string returned = encoder.Encode(input);
-            result = returned.Length <= max;
+            result = returned.Length <= encoder.MaxCharacters;
             if (!result)
             {
                break;

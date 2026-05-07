@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using BeiderMorse.Encoder.Enumerator;
 
 namespace BeiderMorse.Encoder
 {
+    /// <summary>
+    /// Kodiert einen Namen mit dem Beider-Morse-Regelwerk <c>APPROX</c> und kodiert jedes Wort eines Mehrwortnamens einzeln.
+    /// Die Näherungsregeln erzeugen breitere Phoneme, die sprachübergreifende Klangvarianten tolerieren. Diese Engine eignet sich
+    /// daher besonders für unscharfes Matching, bei dem sprachbedingte Schreibvarianten erwartet werden (z.B. "Müller" ~ "Miller").
+    /// Jedes Wort wird separat kodiert und die Ergebnisse mit <c>-</c> verbunden (z.B. "Maria Garcia" → "maria_code-garcia_code").
+    /// Adelspräfixe (da, de, van, von, …) werden vor der Kodierung mit dem folgenden Wort zusammengefasst.
+    /// Französische d'Apostroph-Konstrukte erzeugen alternative Codes, die mit <c>|</c> getrennt werden.
+    /// </summary>
     public class GenericAproxSeparateNameEngine : IPhoneticEngine
     {
         private static int _defaultMaxPhoneme = 20;
-        private static int _maxCharacters;
         private readonly ISet<string> _namePrefixes;
 
         public int MaxPhonemes { get; }
+        public int MaxCharacters { get; set; } = 1000000;
         private Lang Lang { get; }
 
         public GenericAproxSeparateNameEngine()
@@ -24,19 +31,11 @@ namespace BeiderMorse.Encoder
 
         public string Encode(string name)
         {
-            _maxCharacters = SetMaxCharacters();
             name = CleanName(name);
 
             string phoneticName = EncodeEachNameInAMultiWordNameSeparately(name);
 
             return FormatNameLength(phoneticName);
-        }
-
-        private static int SetMaxCharacters()
-        {
-            return Int16.TryParse(ConfigurationManager.AppSettings["CharactersLimit"], out short maxNumber)
-                ? maxNumber
-                : 1000000;
         }
 
         private static string CleanName(string name)
@@ -137,7 +136,7 @@ namespace BeiderMorse.Encoder
 
         private string FormatNameLength(string result)
         {
-            while (result.Length > _maxCharacters - 2)
+            while (result.Length > MaxCharacters - 2)
             {
                 result = result.Substring(0, result.LastIndexOf("|", StringComparison.Ordinal));
             }
